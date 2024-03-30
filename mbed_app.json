@@ -5,7 +5,7 @@
       "rtos.main-thread-stack-size": 8192,
       "lwip.pbuf-pool-size": 20,
       "lwip.socket-max": 8,
-      "lwip.udp-socket-max": 8
+      "lwip.udp-socket-max": 8,
       "target.printf_lib": "std"
     },
     "K64F": {
