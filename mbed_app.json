@@ -6,6 +6,7 @@
       "lwip.pbuf-pool-size": 20,
       "lwip.socket-max": 8,
       "lwip.udp-socket-max": 8
+      "target.printf_lib": "std"
     },
     "K64F": {
       "platform.stdio-baud-rate": 9600
