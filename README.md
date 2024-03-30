@@ -1,3 +1,14 @@
+# mros2-mbed (on mbed studio)
+## Getting started!!!!!!
+1. open mbed studio!!!
+2. File -> import program -> copy this repository's url
+3. open Libraries tab
+4. click "!" button
+5. enjoy mros2 life!!!
+(when you build,you shoud run some python program ↓)
+`python3 ./mros2/mros2_header_generator/templates_generator.py --indir ./`
+
+
 [![build_app](https://github.com/mROS-base/mros2-mbed/actions/workflows/build_app.yaml/badge.svg)](https://github.com/mROS-base/mros2-mbed/actions/workflows/build_app.yaml)
 [![build_board](https://github.com/mROS-base/mros2-mbed/actions/workflows/build_board.yaml/badge.svg)](https://github.com/mROS-base/mros2-mbed/actions/workflows/build_board.yaml)
 
