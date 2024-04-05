@@ -3,12 +3,13 @@
  * as one of mros2 features. You do not need to modify this. 
  */
 #include "std_msgs/msg/string.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 
-
-template mros2::Publisher mros2::Node::create_publisher<std_msgs::msg::String>(std::string topic_name, int qos);
-template void mros2::Publisher::publish(std_msgs::msg::String &msg);
 
 
 
 template mros2::Subscriber mros2::Node::create_subscription(std::string topic_name, int qos, void (*fp)(std_msgs::msg::String*));
 template void mros2::Subscriber::callback_handler<std_msgs::msg::String>(void *callee, const rtps::ReaderCacheChange &cacheChange);
+
+template mros2::Subscriber mros2::Node::create_subscription(std::string topic_name, int qos, void (*fp)(geometry_msgs::msg::Twist*));
+template void mros2::Subscriber::callback_handler<geometry_msgs::msg::Twist>(void *callee, const rtps::ReaderCacheChange &cacheChange);

@@ -7,7 +7,7 @@
 #include "EthernetInterface.h"
 
 /* Comment out the below line enables DHCP connection */
-#define MROS2_IP_ADDRESS_STATIC
+// #define MROS2_IP_ADDRESS_STATIC
 
 /* Set network config when using static IP (default usage) */
 #ifdef MROS2_IP_ADDRESS_STATIC
