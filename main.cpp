@@ -15,10 +15,10 @@ bool power=0;       // 0:停止 1:動く
 bool debugger=0;    // 0:off 1:on
 
 // 回路定義here
-PwmOut m00(PA_5);
-PwmOut m01(PA_6);
-PwmOut m10(PC_7);
-PwmOut m11(PC_8);
+PwmOut m00(PA_6);
+PwmOut m01(PA_5);
+PwmOut m10(PC_8);
+PwmOut m11(PC_7);
 PwmOut m20(PC_9);
 PwmOut m21(PD_14);
 PwmOut m30(PD_15);
