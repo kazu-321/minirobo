@@ -1,4 +1,5 @@
 // include here
+#include "ThisThread.h"
 #include "mbed.h"
 #include "mros2.h"
 #include "mros2-platform.h"
@@ -6,24 +7,28 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "strswitch.h"
 
+using namespace std;
+
 // 変数定義here
 float x=0.0;        // 移動ベクトルのx成分(前:+)
 float y=0.0;        // 移動ベクトルのy成分(左:+)
 float angle=0.0;    // 角度(左回転:+)
-float duty[4]={0,0,0,0};    // 最終的なduty 右前,左前,右後,左後
+float duty[4]={0,0,0,0};    // 最終的なduty 右前,左前,左後,右後
 bool power=0;       // 0:停止 1:動く
 bool debugger=0;    // 0:off 1:on
+bool stop=false;
 
 // 回路定義here
-PwmOut m00(PA_6);
-PwmOut m01(PA_5);
-PwmOut m10(PC_8);
-PwmOut m11(PC_7);
-PwmOut m20(PC_9);
-PwmOut m21(PD_14);
-PwmOut m30(PD_15);
-PwmOut m31(PE_9);
+PwmOut m00(PC_8);
+PwmOut m01(PC_7);
+PwmOut m10(PA_6);
+PwmOut m11(PA_5);
+PwmOut m20(PE_9);
+PwmOut m21(PD_15);
+PwmOut m30(PC_9);
+PwmOut m31(PD_14);
 PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
+DigitalOut led1(LED1);
 
 
 
@@ -31,7 +36,7 @@ PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
 void cmd_callback(std_msgs::msg::String *msg);
 void calculate_duty(geometry_msgs::msg::Twist *twist);
 void duty2pwm(void);
-
+void zero(void);
 
 // プログラムhere
 int main(){
@@ -56,12 +61,13 @@ int main(){
 
     for(int i=0;i<4;i++) {motor[i][0]->period_ms(1);motor[i][1]->period_ms(1);}
     while (1) {
-        if(power) for(int i=0;i<4;i++) {
+        if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
             else {motor[i][0]->write(0); motor[i][1]->write(abs(duty[i]));}
         }
-        else for(int i=0;i<4;i++) {motor[i][0]->write(0); motor[i][1]->write(0);}
+        else if(!stop) for(int i=0;i<4;i++) {zero();}
         ThisThread::sleep_for(10ms);
+        led1=!led1;
     }
     mros2::spin();
     return 0;
@@ -72,22 +78,38 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
-    duty[0]= (x + y + angle)/3;
-    duty[1]= (x - y - angle)/3;
-    duty[2]= (x - y + angle)/3;
-    duty[3]= (x + y - angle)/3;
+    duty[0]= (x + y + angle)/2;
+    duty[1]= (x - y - angle)/2;
+    duty[2]= (x - y + angle)/2;
+    duty[3]= (x + y - angle)/2;
     if(debugger) printf("duty: %f,%f,%f,%f\n",duty[0],duty[1],duty[2],duty[3]);
+}
+
+void zero(void){
+    for(int i=0;i<4;i++){
+        motor[i][0]->write(0.0);
+        motor[i][1]->write(0.0);
+    }
 }
 
 
 void cmd_callback(std_msgs::msg::String *msg){
-    printf("%s\n",msg->data.c_str());
-    strswitch(msg->data.c_str())
+    string cmd=msg->data;
+    vector<string> cmds=split(cmd.c_str(),' ');
+    printf("%s\n",cmd.c_str());
+    strswitch(cmds[0].c_str())
     strcase("c")
         power=1;
     strcase("p")
         power=0;
     strcase("z")
         debugger=!debugger;
+    strstart("t")
+        stop=!stop;
+        if(stop){
+            printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
+            motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
+        }else zero();
     strend
 }
+
