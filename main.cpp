@@ -58,11 +58,13 @@ int main(){
     mros2::Node node = mros2::Node::create_node("mros2_node");  // node生成
     mros2::Subscriber sub_cmd = node.create_subscription<std_msgs::msg::String>("cmd", 10, cmd_callback);   // コマンド入力
     mros2::Subscriber sub_vel = node.create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, calculate_duty);     // 移動ベクトル
+    // mros2::Subscriber::callback_handler<std_msgs::msg::String>(rtps::)
+    
 
     osDelay(100);
     MROS2_INFO("ready to pub/sub message\r\n---");
 
-    for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);da}
+    for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
