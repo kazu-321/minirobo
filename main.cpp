@@ -17,18 +17,21 @@ float duty[4]={0,0,0,0};    // 最終的なduty 右前,左前,左後,右後
 bool power=0;       // 0:停止 1:動く
 bool debugger=0;    // 0:off 1:on
 bool stop=false;
+float unko=2;
 
 // 回路定義here
 PwmOut m00(PC_8);
 PwmOut m01(PC_7);
 PwmOut m10(PA_6);
 PwmOut m11(PA_5);
-PwmOut m20(PE_9);
-PwmOut m21(PD_15);
-PwmOut m30(PC_9);
-PwmOut m31(PD_14);
+PwmOut m20(PC_9);
+PwmOut m21(PD_14);
+PwmOut m30(PE_9);
+PwmOut m31(PD_15);
 PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
 DigitalOut led1(LED1);
+DigitalOut led2(LED2);
+DigitalOut led3(LED3);
 
 
 
@@ -59,11 +62,12 @@ int main(){
     osDelay(100);
     MROS2_INFO("ready to pub/sub message\r\n---");
 
-    for(int i=0;i<4;i++) {motor[i][0]->period_ms(1);motor[i][1]->period_ms(1);}
+    for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);da}
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
-            else {motor[i][0]->write(0); motor[i][1]->write(abs(duty[i]));}
+            else {motor[i][0]->write(0); motor[i][1]->write(abs(duty[i]));}            
+            led3=1;
         }
         else if(!stop) for(int i=0;i<4;i++) {zero();}
         ThisThread::sleep_for(10ms);
@@ -73,15 +77,15 @@ int main(){
     return 0;
 }
 
-
+//11 02
 void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
-    duty[0]= (x + y + angle)/2;
-    duty[1]= (x - y - angle)/2;
-    duty[2]= (x - y + angle)/2;
-    duty[3]= (x + y - angle)/2;
+    duty[0]= (x - y + angle)/unko;
+    duty[1]= (x + y - angle)/unko;
+    duty[2]= (x - y - angle)/unko;
+    duty[3]= (x + y + angle)/unko;
     if(debugger) printf("duty: %f,%f,%f,%f\n",duty[0],duty[1],duty[2],duty[3]);
 }
 
@@ -90,10 +94,12 @@ void zero(void){
         motor[i][0]->write(0.0);
         motor[i][1]->write(0.0);
     }
+    led3=0;
 }
 
 
 void cmd_callback(std_msgs::msg::String *msg){
+    led2=!led2;
     string cmd=msg->data;
     vector<string> cmds=split(cmd.c_str(),' ');
     printf("%s\n",cmd.c_str());
@@ -105,11 +111,13 @@ void cmd_callback(std_msgs::msg::String *msg){
     strcase("z")
         debugger=!debugger;
     strstart("t")
-        stop=!stop;
-        if(stop){
-            printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
-            motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
-        }else zero();
+        stop=true;
+        printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
+        motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
+        ThisThread::sleep_for(3s);
+        stop=false;
+    strstart("unko")
+        unko=stof(cmds[1]);
     strend
 }
 
