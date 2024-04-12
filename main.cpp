@@ -17,6 +17,7 @@ float duty[4]={0,0,0,0};    // 最終的なduty 右前,左前,左後,右後
 bool power=0;       // 0:停止 1:動く
 bool debugger=0;    // 0:off 1:on
 bool stop=false;
+bool is_alive=false;
 float unko=2;
 
 // 回路定義here
@@ -33,6 +34,7 @@ DigitalOut led1(LED1);
 DigitalOut led2(LED2);
 DigitalOut led3(LED3);
 
+Ticker keep_aliver;
 
 
 // 関数定義here
@@ -40,6 +42,7 @@ void cmd_callback(std_msgs::msg::String *msg);
 void calculate_duty(geometry_msgs::msg::Twist *twist);
 void duty2pwm(void);
 void zero(void);
+void pls_keep_alive(void);
 
 // プログラムhere
 int main(){
@@ -63,7 +66,7 @@ int main(){
 
     osDelay(100);
     MROS2_INFO("ready to pub/sub message\r\n---");
-
+    keep_aliver.attach(&pls_keep_alive,50ms);
     for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
@@ -81,6 +84,7 @@ int main(){
 
 //11 02
 void calculate_duty(geometry_msgs::msg::Twist *twist){
+    is_alive=true;
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
@@ -123,3 +127,7 @@ void cmd_callback(std_msgs::msg::String *msg){
     strend
 }
 
+void pls_keep_alive(void){
+    if(is_alive) {is_alive=false;}
+    else power=0;
+}
