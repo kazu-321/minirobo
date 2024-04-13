@@ -38,7 +38,7 @@ PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
 DigitalOut led1(LED1);  // main関数生存確認
 DigitalOut led2(LED2);  // 通信確認
 DigitalOut power(LED3); // 電源オンオフ&確認
-// BNO055 cjk(PB_9,PB_8);  // 地磁気
+BNO055 cjk(PB_11,PB_10);  // 地磁気
 Ticker keep_aliver;     // 割り込み
 
 
@@ -60,9 +60,10 @@ int main(){
         MROS2_INFO("ネットつながた！\r\n---");
     }
 
-    // cjk.reset();
-    // while(!cjk.check()){ThisThread::sleep_for(1ms);}
-    // MROS2_INFO("地磁気確認ﾖｼ！");
+    cjk.reset();
+    MROS2_INFO("地磁気確認開始");
+    while(!cjk.check());
+    MROS2_INFO("地磁気確認ﾖｼ！");
 
     MROS2_INFO("mini robot起動します");
 
@@ -84,7 +85,8 @@ int main(){
             else {motor[i][0]->write(0); motor[i][1]->write(abs(duty[i]));}        
         }
         else if(!stop) for(int i=0;i<4;i++) {zero();}
-        ThisThread::sleep_for(10ms);
+        ThisThread::sleep_for(9ms);
+        get_cjk();
         led1=!led1;
     }
     mros2::spin();
@@ -140,11 +142,11 @@ void pls_keep_alive(void){
     else {power=0;}
 }
 
-// void get_cjk(void){
-//     cjk.setmode(OPERATION_MODE_NDOF);
-//     cjk.get_calib();
-//     cjk.get_angles();
-//     cjk.get_quat();
-//     if(debugger) printf("%f \n",cjk.euler.yaw);
-//     ThisThread::sleep_for(1ms);
-// }
+void get_cjk(void){
+    cjk.setmode(OPERATION_MODE_NDOF);
+    cjk.get_calib();
+    cjk.get_angles();
+    cjk.get_quat();
+    if(debugger) printf("%f \n",cjk.euler.yaw);
+    ThisThread::sleep_for(1ms);
+}
