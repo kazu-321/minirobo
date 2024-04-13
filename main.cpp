@@ -1,26 +1,31 @@
 // include here
 #include "ThisThread.h"
+#include "logging.h"
 #include "mbed.h"
 #include "mros2.h"
 #include "mros2-platform.h"
 #include "std_msgs/msg/string.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "strswitch.h"
+#include "BNO055.h"
 
+// using and define here
 using namespace std;
+
 
 // 変数定義here
 float x=0.0;        // 移動ベクトルのx成分(前:+)
 float y=0.0;        // 移動ベクトルのy成分(左:+)
 float angle=0.0;    // 角度(左回転:+)
 float duty[4]={0,0,0,0};    // 最終的なduty 右前,左前,左後,右後
-bool power=0;       // 0:停止 1:動く
 bool debugger=0;    // 0:off 1:on
-bool stop=false;
-bool is_alive=false;
-float unko=2;
+bool stop=false;    // 一時停止
+bool is_alive=false;// 生存確認 
+float unko=2;       // 実質スピード
+float goal=0.0;
+float now=0.0;
 
-// 回路定義here
+// 回路(PIN)定義here
 PwmOut m00(PC_8);
 PwmOut m01(PC_7);
 PwmOut m10(PA_6);
@@ -30,49 +35,53 @@ PwmOut m21(PD_14);
 PwmOut m30(PE_9);
 PwmOut m31(PD_15);
 PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
-DigitalOut led1(LED1);
-DigitalOut led2(LED2);
-DigitalOut led3(LED3);
-
-Ticker keep_aliver;
+DigitalOut led1(LED1);  // main関数生存確認
+DigitalOut led2(LED2);  // 通信確認
+DigitalOut power(LED3); // 電源オンオフ&確認
+// BNO055 cjk(PB_9,PB_8);  // 地磁気
+Ticker keep_aliver;     // 割り込み
 
 
 // 関数定義here
-void cmd_callback(std_msgs::msg::String *msg);
-void calculate_duty(geometry_msgs::msg::Twist *twist);
-void duty2pwm(void);
-void zero(void);
-void pls_keep_alive(void);
+void cmd_callback(std_msgs::msg::String *msg);  // コマンド
+void calculate_duty(geometry_msgs::msg::Twist *twist);  // 移動
+void zero(void);    // すべてのモーターストップ
+void pls_keep_alive(void);  // 通信生存確認
+void get_cjk(void);     // 地磁気処理
+float fix(float r);     // 角度を -180~180に変換する
+
 
 // プログラムhere
 int main(){
     if (mros2_platform::network_connect()) {            // connect to the network
-        MROS2_ERROR("failed to connect and setup network! aborting,,,");
+        MROS2_ERROR("ネットつながってないにょ...");
         return -1;
     } else {
-        MROS2_INFO("successfully connect and setup network\r\n---");
+        MROS2_INFO("ネットつながた！\r\n---");
     }
 
-    MROS2_INFO("app name: mini robot");
+    // cjk.reset();
+    // while(!cjk.check()){ThisThread::sleep_for(1ms);}
+    // MROS2_INFO("地磁気確認ﾖｼ！");
+
+    MROS2_INFO("mini robot起動します");
 
     mros2::init(0, NULL);       // 初期化
-    MROS2_DEBUG("mROS 2 initialization is completed");
+    MROS2_DEBUG("mROS 2初期化完了");
 
     mros2::Node node = mros2::Node::create_node("mros2_node");  // node生成
     mros2::Subscriber sub_cmd = node.create_subscription<std_msgs::msg::String>("cmd", 10, cmd_callback);   // コマンド入力
     mros2::Subscriber sub_vel = node.create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, calculate_duty);     // 移動ベクトル
-    // mros2::Subscriber::callback_handler<std_msgs::msg::String>(rtps::)
     
 
     osDelay(100);
-    MROS2_INFO("ready to pub/sub message\r\n---");
+    MROS2_INFO("送受信準備完了！");
     keep_aliver.attach(&pls_keep_alive,50ms);
     for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
-            else {motor[i][0]->write(0); motor[i][1]->write(abs(duty[i]));}            
-            led3=1;
+            else {motor[i][0]->write(0); motor[i][1]->write(abs(duty[i]));}        
         }
         else if(!stop) for(int i=0;i<4;i++) {zero();}
         ThisThread::sleep_for(10ms);
@@ -100,7 +109,6 @@ void zero(void){
         motor[i][0]->write(0.0);
         motor[i][1]->write(0.0);
     }
-    led3=0;
 }
 
 
@@ -129,5 +137,14 @@ void cmd_callback(std_msgs::msg::String *msg){
 
 void pls_keep_alive(void){
     if(is_alive) {is_alive=false;}
-    else power=0;
+    else {power=0;}
 }
+
+// void get_cjk(void){
+//     cjk.setmode(OPERATION_MODE_NDOF);
+//     cjk.get_calib();
+//     cjk.get_angles();
+//     cjk.get_quat();
+//     if(debugger) printf("%f \n",cjk.euler.yaw);
+//     ThisThread::sleep_for(1ms);
+// }
