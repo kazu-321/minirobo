@@ -8,6 +8,7 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "strswitch.h"
 #include "BNO055.h"
+#include <math.h>
 
 // using and define here
 using namespace std;
@@ -22,8 +23,11 @@ bool debugger=0;    // 0:off 1:on
 bool stop=false;    // 一時停止
 bool is_alive=false;// 生存確認 
 float unko=2;       // 実質スピード
-float goal=0.0;
-float now=0.0;
+float goal=0.0;     // 目標値
+float now=0.0;      // 現在の値
+float ch=0.0;       // 補正
+float p=0.008;       // P制御
+float out=0.0;      // P制御出力
 
 // 回路(PIN)定義here
 PwmOut m00(PC_8);
@@ -49,7 +53,7 @@ void zero(void);    // すべてのモーターストップ
 void pls_keep_alive(void);  // 通信生存確認
 void get_cjk(void);     // 地磁気処理
 float fix(float r);     // 角度を -180~180に変換する
-
+void echo();
 
 // プログラムhere
 int main(){
@@ -57,12 +61,12 @@ int main(){
         MROS2_ERROR("ネットつながってないにょ...");
         return -1;
     } else {
-        MROS2_INFO("ネットつながた！\r\n---");
+        MROS2_INFO("ネットつながた！---");
     }
 
     cjk.reset();
     MROS2_INFO("地磁気確認開始");
-    while(!cjk.check());
+    while(!cjk.check()){printf("地磁気こないよぉ....\n");}
     MROS2_INFO("地磁気確認ﾖｼ！");
 
     MROS2_INFO("mini robot起動します");
@@ -77,7 +81,7 @@ int main(){
 
     osDelay(100);
     MROS2_INFO("送受信準備完了！");
-    keep_aliver.attach(&pls_keep_alive,50ms);
+    keep_aliver.attach(&pls_keep_alive,100ms);
     for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
@@ -85,9 +89,10 @@ int main(){
             else {motor[i][0]->write(0); motor[i][1]->write(abs(duty[i]));}        
         }
         else if(!stop) for(int i=0;i<4;i++) {zero();}
-        ThisThread::sleep_for(9ms);
+        ThisThread::sleep_for(10ms);
         get_cjk();
         led1=!led1;
+        if(debugger) echo();
     }
     mros2::spin();
     return 0;
@@ -99,11 +104,11 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
-    duty[0]= (x - y + angle)/unko;
-    duty[1]= (x + y - angle)/unko;
-    duty[2]= (x - y - angle)/unko;
-    duty[3]= (x + y + angle)/unko;
-    if(debugger) printf("duty: %f,%f,%f,%f\n",duty[0],duty[1],duty[2],duty[3]);
+    out=p*fix(now-goal);
+    duty[0]= (x - y + angle)/unko+out;
+    duty[1]= (x + y - angle)/unko-out;
+    duty[2]= (x - y - angle)/unko-out;
+    duty[3]= (x + y + angle)/unko+out;
 }
 
 void zero(void){
@@ -134,6 +139,8 @@ void cmd_callback(std_msgs::msg::String *msg){
         stop=false;
     strstart("unko")
         unko=stof(cmds[1]);
+    strstart("g")
+        goal=stof(cmds[1]);
     strend
 }
 
@@ -147,6 +154,23 @@ void get_cjk(void){
     cjk.get_calib();
     cjk.get_angles();
     cjk.get_quat();
-    if(debugger) printf("%f \n",cjk.euler.yaw);
-    ThisThread::sleep_for(1ms);
+    now=cjk.euler.yaw;
+    if(abs(angle)>0.01) ch=now-goal;
+    now-=ch;
+}
+
+float fix(float r){
+    while(r>180) r-=360;
+    while(r<-180) r+=360;
+    return r;
+}
+
+void echo(){
+    // printf("duty: %0.3f,%0.3f,%0.3f,%0.3f\t",duty[0],duty[1],duty[2],duty[3]);
+    printf("x: %0.1f, y: %0.1f, a:%0.1f \t",x,y,angle);
+    printf("cjk: %0.3f\t",cjk.euler.yaw);
+    printf("now: %0.3f\t",now);
+    printf("ch: %0.3f\t",ch);
+    printf("out: %0.3f\t",out);
+    printf("\n");
 }
