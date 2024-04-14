@@ -6,9 +6,12 @@
 #include "mros2-platform.h"
 #include "std_msgs/msg/string.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "sensor_msgs/msg/image.hpp"
 #include "strswitch.h"
 #include "BNO055.h"
+#include <cstdint>
 #include <math.h>
+#include <vector>
 #include "arducam.h"
 
 // using and define here
@@ -30,6 +33,7 @@ float ch=0.0;       // 補正
 float p=0.01;       // P制御
 float out=0.0;      // P制御出力
 
+
 // 回路(PIN)定義here
 PwmOut m00(PC_8);
 PwmOut m01(PC_7);
@@ -44,8 +48,10 @@ DigitalOut led1(LED1);  // main関数生存確認
 DigitalOut led2(LED2);  // 通信確認
 DigitalOut power(LED3); // 電源オンオフ&確認
 BNO055 cjk(PB_11,PB_10);  // 地磁気
+ArduCAM cam(PC_12,PC_11,PC_10,PD_12,PB_9,PB_8);          // カメラ
 Ticker keep_aliver;     // 割り込み
 
+Thread cam_th;
 
 // 関数定義here
 void cmd_callback(std_msgs::msg::String *msg);  // コマンド
@@ -55,6 +61,10 @@ void pls_keep_alive(void);  // 通信生存確認
 void get_cjk(void);     // 地磁気処理
 float fix(float r);     // 角度を -180~180に変換する
 void echo();
+void cam_fn();
+
+mros2::Publisher pub_cam;
+
 
 // プログラムhere
 int main(){
@@ -70,6 +80,12 @@ int main(){
     while(!cjk.check()){printf("地磁気こないよぉ....\n");}
     MROS2_INFO("地磁気確認ﾖｼ！");
 
+    MROS2_INFO("カメラ起動");
+    cam.InitCAM();
+    cam.OV2640_set_JPEG_size(1);
+    cam.set_format(JPEG);
+    MROS2_INFO("カメラﾖｼ！");
+
     MROS2_INFO("mini robot起動します");
 
     mros2::init(0, NULL);       // 初期化
@@ -78,12 +94,13 @@ int main(){
     mros2::Node node = mros2::Node::create_node("mros2_node");  // node生成
     mros2::Subscriber sub_cmd = node.create_subscription<std_msgs::msg::String>("cmd", 10, cmd_callback);   // コマンド入力
     mros2::Subscriber sub_vel = node.create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, calculate_duty);     // 移動ベクトル
-    
+    mros2::Publisher pub_cam = node.create_publisher<sensor_msgs::msg::Image>("Image",10);
 
     osDelay(100);
     MROS2_INFO("送受信準備完了！");
     keep_aliver.attach(&pls_keep_alive,100ms);
     for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
+    cam_th.start(&cam_fn);
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
@@ -176,4 +193,32 @@ void echo(){
     printf("ch: %0.3f\t",ch);
     printf("out: %0.3f\t",out);
     printf("\n");
+}
+
+void cam_fn(){
+    while(true){
+        cam.flush_fifo();
+        cam.start_capture();
+        ThisThread::sleep_for(1s);
+        cam.clear_fifo_flag();
+        uint32_t imageLength = cam.read_fifo_length();
+        if(imageLength>0){
+            printf("got cam! %d\n",imageLength);
+            auto message=sensor_msgs::msg::Image();
+            message.frame_id="cam";
+            message.height=240;
+            message.width=320;
+            message.encoding="rgb8";
+            message.is_bigendian=0;
+            message.step=960;
+            vector<uint8_t> imageData;
+            imageData.reserve(imageLength);
+            for(size_t i=0;i<imageLength;i++){
+                uint8_t byte=cam.read_fifo();
+                imageData.push_back(byte);
+            }
+            message.data=imageData;
+            pub_cam.publish(message);
+        }else{printf("failed cam\n");}
+    }
 }
