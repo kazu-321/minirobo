@@ -9,6 +9,7 @@
 #include "strswitch.h"
 #include "BNO055.h"
 #include <math.h>
+#include "arducam.h"
 
 // using and define here
 using namespace std;
@@ -26,7 +27,7 @@ float unko=2;       // 実質スピード
 float goal=0.0;     // 目標値
 float now=0.0;      // 現在の値
 float ch=0.0;       // 補正
-float p=0.008;       // P制御
+float p=0.01;       // P制御
 float out=0.0;      // P制御出力
 
 // 回路(PIN)定義here
@@ -105,6 +106,8 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     y=twist->linear.y;
     angle=twist->angular.z;
     out=p*fix(now-goal);
+    if(out>0.5) out=0.5;
+    else if(out<-0.5) out=-0.5;
     duty[0]= (x - y + angle)/unko+out;
     duty[1]= (x + y - angle)/unko-out;
     duty[2]= (x - y - angle)/unko-out;
