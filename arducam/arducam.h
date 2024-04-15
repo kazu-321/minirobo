@@ -2,13 +2,14 @@
 #define MBED_ARDUCAM_H 
 
 #include "mbed.h"
+#include <cstdint>
 
 //******************************************************************************
 // Macros
 //******************************************************************************
 #define I2C_SEND_STOP      0x01
 #define I2C_SEND_START     0x02
-#define sensor_addr  0x78
+#define sensor_addr  0x60
 #define SPAWN_TASK_PRIORITY            9//9
 #define HTTP_SERVER_APP_TASK_PRIORITY  3//1
 #define CAMERA_SERVICE_PRIORITY        3

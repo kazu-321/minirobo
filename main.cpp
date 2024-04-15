@@ -1,6 +1,5 @@
 // include here
 #include "ThisThread.h"
-#include "logging.h"
 #include "mbed.h"
 #include "mros2.h"
 #include "mros2-platform.h"
@@ -10,13 +9,13 @@
 #include "strswitch.h"
 #include "BNO055.h"
 #include <cstdint>
+#include <cstdio>
 #include <math.h>
 #include <vector>
-#include "arducam.h"
-
+// #include "arducam.h"
 // using and define here
+#include "wav.h"
 using namespace std;
-
 
 // 変数定義here
 float x=0.0;        // 移動ベクトルのx成分(前:+)
@@ -32,7 +31,7 @@ float now=0.0;      // 現在の値
 float ch=0.0;       // 補正
 float p=0.01;       // P制御
 float out=0.0;      // P制御出力
-
+string wav="";      // wavファイル名
 
 // 回路(PIN)定義here
 PwmOut m00(PC_8);
@@ -43,31 +42,36 @@ PwmOut m20(PC_9);
 PwmOut m21(PD_14);
 PwmOut m30(PE_9);
 PwmOut m31(PD_15);
+// PwmOut sound(PE_14);
 PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
 DigitalOut led1(LED1);  // main関数生存確認
 DigitalOut led2(LED2);  // 通信確認
 DigitalOut power(LED3); // 電源オンオフ&確認
 BNO055 cjk(PB_11,PB_10);  // 地磁気
-ArduCAM cam(PC_12,PC_11,PC_10,PD_12,PB_9,PB_8);          // カメラ
+// ArduCAM cam(PC_12,PC_11,PC_10,PD_2,PB_9,PB_8);          // カメラ
 Ticker keep_aliver;     // 割り込み
 
-Thread cam_th;
+// Thread cam_th;
+Thread sound_th;
 
 // 関数定義here
 void cmd_callback(std_msgs::msg::String *msg);  // コマンド
+
 void calculate_duty(geometry_msgs::msg::Twist *twist);  // 移動
 void zero(void);    // すべてのモーターストップ
 void pls_keep_alive(void);  // 通信生存確認
 void get_cjk(void);     // 地磁気処理
 float fix(float r);     // 角度を -180~180に変換する
 void echo();
-void cam_fn();
+// void cam_fn();
+void sound_loop();
 
-mros2::Publisher pub_cam;
+// mros2::Publisher pub_cam;
 
 
 // プログラムhere
 int main(){
+    MROS2_INFO("start");
     if (mros2_platform::network_connect()) {            // connect to the network
         MROS2_ERROR("ネットつながってないにょ...");
         return -1;
@@ -80,11 +84,11 @@ int main(){
     while(!cjk.check()){printf("地磁気こないよぉ....\n");}
     MROS2_INFO("地磁気確認ﾖｼ！");
 
-    MROS2_INFO("カメラ起動");
-    cam.InitCAM();
-    cam.OV2640_set_JPEG_size(1);
-    cam.set_format(JPEG);
-    MROS2_INFO("カメラﾖｼ！");
+    // MROS2_INFO("カメラ起動");
+    // cam.InitCAM();
+    // cam.set_format(JPEG);
+    // cam.InitCAM();
+    // MROS2_INFO("カメラﾖｼ！");
 
     MROS2_INFO("mini robot起動します");
 
@@ -94,13 +98,14 @@ int main(){
     mros2::Node node = mros2::Node::create_node("mros2_node");  // node生成
     mros2::Subscriber sub_cmd = node.create_subscription<std_msgs::msg::String>("cmd", 10, cmd_callback);   // コマンド入力
     mros2::Subscriber sub_vel = node.create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, calculate_duty);     // 移動ベクトル
-    mros2::Publisher pub_cam = node.create_publisher<sensor_msgs::msg::Image>("Image",10);
+    // mros2::Publisher pub_cam = node.create_publisher<sensor_msgs::msg::Image>("image",10);
 
     osDelay(100);
     MROS2_INFO("送受信準備完了！");
-    keep_aliver.attach(&pls_keep_alive,100ms);
+    keep_aliver.attach(&pls_keep_alive,300ms);
     for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
-    cam_th.start(&cam_fn);
+    // cam_th.start(&cam_fn);
+    sound_th.start(&sound_loop);
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
@@ -147,8 +152,10 @@ void cmd_callback(std_msgs::msg::String *msg){
     strswitch(cmds[0].c_str())
     strcase("c")
         power=1;
+        wav="c";
     strcase("p")
         power=0;
+        wav="p";
     strcase("z")
         debugger=!debugger;
     strstart("t")
@@ -187,7 +194,7 @@ float fix(float r){
 
 void echo(){
     // printf("duty: %0.3f,%0.3f,%0.3f,%0.3f\t",duty[0],duty[1],duty[2],duty[3]);
-    printf("x: %0.1f, y: %0.1f, a:%0.1f \t",x,y,angle);
+    // printf("x: %0.1f, y: %0.1f, a:%0.1f \t",x,y,angle);
     printf("cjk: %0.3f\t",cjk.euler.yaw);
     printf("now: %0.3f\t",now);
     printf("ch: %0.3f\t",ch);
@@ -195,30 +202,78 @@ void echo(){
     printf("\n");
 }
 
-void cam_fn(){
+// void cam_fn(){
+//     ThisThread::sleep_for(2s);
+//     while(true){
+//         cam.write_reg(0x00,0x56);
+//         if(cam.read_reg(0x00)==0x56){
+//             printf("ok!!\n");
+//             break;
+//         }else{
+//             printf("spi error...\n");
+//         }
+//         ThisThread::sleep_for(100ms);
+//     }
+//     while(true){
+//         cam.flush_fifo();
+//         cam.clear_fifo_flag();
+//         cam.start_capture();
+//         while(!cam.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK));
+//         uint32_t imageLength = cam.read_fifo_length();
+//         printf("data %d\n",imageLength);
+//         cam.CS_LOW();
+//         cam.set_fifo_burst();
+//         auto message=sensor_msgs::msg::Image();
+//         message.frame_id="camera_flame";
+//         message.nanosec=0;
+//         message.sec=time(NULL);
+//         message.height=240;
+//         message.width=320;
+//         message.encoding="jpeg";
+//         message.is_bigendian=0;
+//         message.step=320*3;
+//         message.data.resize(imageLength);
+//         // vector<uint8_t> imageData(imageLength);
+//         for(int i=0;i<imageLength;i++){
+//             uint8_t byte=cam.read_fifo();
+//             // printf("%d,",byte);
+//             // imageData[i]=byte;
+//             message.data[i]=byte;
+//         }
+
+//         cam.CS_HIGH();
+//         cam.clear_fifo_flag();
+//         // message.data=imageData;
+//         pub_cam.publish(message);
+//     }
+// }
+
+void sound_loop(){
     while(true){
-        cam.flush_fifo();
-        cam.start_capture();
-        ThisThread::sleep_for(1s);
-        cam.clear_fifo_flag();
-        uint32_t imageLength = cam.read_fifo_length();
-        if(imageLength>0){
-            printf("got cam! %d\n",imageLength);
-            auto message=sensor_msgs::msg::Image();
-            message.frame_id="cam";
-            message.height=240;
-            message.width=320;
-            message.encoding="rgb8";
-            message.is_bigendian=0;
-            message.step=960;
-            vector<uint8_t> imageData;
-            imageData.reserve(imageLength);
-            for(size_t i=0;i<imageLength;i++){
-                uint8_t byte=cam.read_fifo();
-                imageData.push_back(byte);
-            }
-            message.data=imageData;
-            pub_cam.publish(message);
-        }else{printf("failed cam\n");}
+        if(wav!=""){
+            unsigned char *ptr;
+            unsigned int len;
+            // uint32_t rate;
+            // if(wav=="c"){
+            //     printf("play c.wav\n");
+            //     ptr=c_wav;
+            //     len=c_wav_len;
+            //     rate=11025;
+
+            //     float wait=1.0/rate*1000*1000;
+            //     sound.period_us((int)wait);
+            //     for(int i=0;i<len;i++){
+            //         sound.write((float)*(ptr+i)/255.0);
+            //         wait_us((int)wait);
+            //     }
+            // }else if(wav=="p"){
+            //     sound.period_us(1000);
+            //     sound.write(1);
+            //     ThisThread::sleep_for(1s);
+            //     sound.write(0);
+            // }
+            wav="";
+            printf("fin\n");
+        }
     }
 }

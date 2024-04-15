@@ -2,6 +2,7 @@
 #include "mbed.h"
 #include "ov2640_regs.h"
 #include "arducam.h"
+#include <cstdint>
 
 #define ENABLE_JPEG
 
@@ -68,27 +69,29 @@ void ArduCAM::set_fifo_burst()
     spi.write(BURST_FIFO_READ);
 }
 
+
+
 void ArduCAM::InitCAM()
 {
     uint8_t reg_val;
-    
-    wrSensorReg16_8(0x3008, 0x80);
+    wrSensorReg8_8(0xff, 0x01);
+    wrSensorReg8_8(0x12, 0x80);
 
     ThisThread::sleep_for(100ms);
     if(m_fmt == JPEG)
     {
-        wrSensorRegs16_8(OV2640_JPEG_INIT); 
-        ThisThread::sleep_for(100ms); 
-        wrSensorRegs16_8(OV2640_QVGA); 
-        wrSensorReg16_8(0x4407,0x0C);
+        wrSensorRegs8_8(OV2640_JPEG_INIT);
+        wrSensorRegs8_8(OV2640_YUV422);
+        wrSensorRegs8_8(OV2640_JPEG);
+        wrSensorReg8_8(0xff, 0x01);
+        wrSensorReg8_8(0x15, 0x00);
+        wrSensorRegs8_8(OV2640_320x240_JPEG);
+        // wrSensorReg8_8(0xff, 0x00);
+        // wrSensorReg8_8(0x44, 0x32);
     }
     else
     {
-        wrSensorRegs16_8(OV2640_QVGA);
-        rdSensorReg16_8(0x3818,&reg_val);
-        wrSensorReg16_8(0x3818, (reg_val | 0x60) & 0xff);
-        rdSensorReg16_8(0x3621,&reg_val);
-        wrSensorReg16_8(0x3621, reg_val & 0xdf);
+        wrSensorRegs8_8(OV2640_QVGA);
     }
 }
 
@@ -371,6 +374,7 @@ int ArduCAM::bus_write(int address, int value)
 {
     // take the SS pin low to select the chip:
     _cs = 0;
+    ThisThread::sleep_for(100ms);
     //  send in the address and value via SPI:
     spi.write(address);
     spi.write(value);
