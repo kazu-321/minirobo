@@ -45,7 +45,7 @@ PwmOut m20(PC_9);
 PwmOut m21(PD_14);
 PwmOut m30(PE_9);
 PwmOut m31(PD_15);
-PwmOut sound(PE_14);
+// PwmOut sound(PA_3);
 PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
 DigitalOut led1(LED1);  // main関数生存確認
 DigitalOut led2(LED2);  // 通信確認
@@ -95,7 +95,7 @@ int main(){
     MROS2_INFO("送受信準備完了！");
     keep_aliver.attach(&pls_keep_alive,300ms);
     for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
-    sound_th.start(&sound_loop);
+    // sound_th.start(&sound_loop);
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
@@ -147,12 +147,12 @@ void cmd_callback(std_msgs::msg::String *msg){
         power=0;
     strcase("z")
         debugger=!debugger;
-    // strstart("t")
-    //     stop=true;
-    //     printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
-    //     motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
-    //     ThisThread::sleep_for(3s);
-    //     stop=false;
+    strstart("test")
+        stop=true;
+        printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
+        motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
+        ThisThread::sleep_for(3s);
+        stop=false;
     strstart("unko")
         unko=stof(cmds[1]);
     strstart("g")
@@ -187,11 +187,11 @@ float fix(float r){
 
 
 void echo(){
-    // printf("duty: %0.3f,%0.3f,%0.3f,%0.3f\t",duty[0],duty[1],duty[2],duty[3]);
+    printf("duty: %0.3f,%0.3f,%0.3f,%0.3f\t",duty[0],duty[1],duty[2],duty[3]);
     // printf("x: %0.1f, y: %0.1f, a:%0.1f \t",x,y,angle);
     printf("cjk: %0.3f\t",cjk.euler.yaw);
-    printf("now: %0.3f\t",now);
-    printf("ch: %0.3f\t",ch);
+    // printf("now: %0.3f\t",now);
+    // printf("ch: %0.3f\t",ch);
     printf("out: %0.3f\t",out);
     printf("\n");
 }
@@ -221,12 +221,14 @@ void sound_loop(){
                 continue;
             }
             float wait=(1.0/rate)*1000*1000;
-            printf("wait :%0.9f\n",wait);
-            sound.period_us((int)wait);
-            for(int i=0;i<len;i++){
-                sound.write((float)*(ptr+i)/255.0);
-                wait_us(40);
-            }
+            // printf("wait :%0.9f\n",wait);
+            // sound.period_us((int)wait);
+            // sound.period_us(93);
+            // for(int i=0;i<len;i++){
+            //     sound.write((float)*(ptr+i)/255.0);
+            //     // wait_us((int)wait/2.5);
+            //     wait_us(40);
+            // }
             wav="";
         }
     }
