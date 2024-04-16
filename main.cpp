@@ -111,7 +111,7 @@ int main(){
     return 0;
 }
 
-//11 02
+
 void calculate_duty(geometry_msgs::msg::Twist *twist){
     is_alive=true;
     x=twist->linear.x;
@@ -125,6 +125,7 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     duty[2]= (x - y - angle)/unko-out;
     duty[3]= (x + y + angle)/unko+out;
 }
+
 
 void zero(void){
     for(int i=0;i<4;i++){
@@ -142,29 +143,30 @@ void cmd_callback(std_msgs::msg::String *msg){
     strswitch(cmds[0].c_str())
     strcase("c")
         power=1;
-        wav="c";
     strcase("p")
         power=0;
-        wav="p";
     strcase("z")
         debugger=!debugger;
-    strstart("t")
-        stop=true;
-        printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
-        motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
-        ThisThread::sleep_for(3s);
-        stop=false;
+    // strstart("t")
+    //     stop=true;
+    //     printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
+    //     motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
+    //     ThisThread::sleep_for(3s);
+    //     stop=false;
     strstart("unko")
         unko=stof(cmds[1]);
     strstart("g")
         goal=stof(cmds[1]);
     strend
+    wav=cmd.c_str();
 }
+
 
 void pls_keep_alive(void){
     if(is_alive) {is_alive=false;}
     else {power=0;}
 }
+
 
 void get_cjk(void){
     cjk.setmode(OPERATION_MODE_NDOF);
@@ -176,11 +178,13 @@ void get_cjk(void){
     now-=ch;
 }
 
+
 float fix(float r){
     while(r>180) r-=360;
     while(r<-180) r+=360;
     return r;
 }
+
 
 void echo(){
     // printf("duty: %0.3f,%0.3f,%0.3f,%0.3f\t",duty[0],duty[1],duty[2],duty[3]);
@@ -192,28 +196,38 @@ void echo(){
     printf("\n");
 }
 
+
 void sound_loop(){
     while(true){
         if(wav!=""){
             unsigned char *ptr;
             unsigned int len;
             uint32_t rate;
+            rate=11000;
             if(wav=="c"){
-                printf("play c.wav\n");
                 ptr=c_wav;
                 len=c_wav_len;
-                // rate=11025;
-                rate=17600;
-                float wait=1.0/rate*1000*1000;
-                printf("wait :%0.9f\n",wait);
-                sound.period_us((int)wait);
-                for(int i=0;i<len;i++){
-                    sound.write((float)*(ptr+i)/255.0);
-                    wait_us((int)wait);
-                }
+            }else if(wav=="p"){
+                ptr=p_wav;
+                len=p_wav_len;
+            }else if(wav=="t"){
+                ptr=t_wav;
+                len=t_wav_len;
+            }else if(wav=="n"){
+                ptr=n_wav;
+                len=n_wav_len;
+            }else{
+                wav="";
+                continue;
+            }
+            float wait=(1.0/rate)*1000*1000;
+            printf("wait :%0.9f\n",wait);
+            sound.period_us((int)wait);
+            for(int i=0;i<len;i++){
+                sound.write((float)*(ptr+i)/255.0);
+                wait_us(40);
             }
             wav="";
-            printf("fin\n");
         }
     }
 }
