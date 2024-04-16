@@ -1,5 +1,4 @@
 // include here
-#include "ThisThread.h"
 #include "mbed.h"
 #include "mros2.h"
 #include "mros2-platform.h"
@@ -12,9 +11,11 @@
 #include <cstdio>
 #include <math.h>
 #include <vector>
-// #include "arducam.h"
-// using and define here
 #include "wav.h"
+// #include "arducam.h"
+
+
+// using and define here
 using namespace std;
 
 
@@ -201,8 +202,8 @@ void sound_loop(){
                 printf("play c.wav\n");
                 ptr=c_wav;
                 len=c_wav_len;
-                rate=11025;
-
+                // rate=11025;
+                rate=17600;
                 float wait=1.0/rate*1000*1000;
                 printf("wait :%0.9f\n",wait);
                 sound.period_us((int)wait);
@@ -210,11 +211,6 @@ void sound_loop(){
                     sound.write((float)*(ptr+i)/255.0);
                     wait_us((int)wait);
                 }
-            }else if(wav=="p"){
-                sound.period_us(125);
-                sound.write(1);
-                ThisThread::sleep_for(1s);
-                sound.write(0);
             }
             wav="";
             printf("fin\n");
