@@ -6,7 +6,7 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "strswitch.h"
-#include "BNO055.h"
+// #include "BNO055.h"
 #include <cstdint>
 #include <cstdio>
 #include <math.h>
@@ -45,12 +45,12 @@ PwmOut m20(PC_9);
 PwmOut m21(PD_14);
 PwmOut m30(PE_9);
 PwmOut m31(PD_15);
-// PwmOut sound(PA_3);
+PwmOut sound(PF_9);
 PwmOut* motor[4][2]={{&m00,&m01},{&m10,&m11},{&m20,&m21},{&m30,&m31}};
 DigitalOut led1(LED1);  // main関数生存確認
 DigitalOut led2(LED2);  // 通信確認
 DigitalOut power(LED3); // 電源オンオフ&確認
-BNO055 cjk(PB_11,PB_10);  // 地磁気
+// BNO055 cjk(PB_11,PB_10);  // 地磁気
 // ArduCAM cam(PC_12,PC_11,PC_10,PD_2,PB_9,PB_8);          // カメラ
 Ticker keep_aliver;     // 割り込み
 Thread sound_th;
@@ -61,7 +61,7 @@ void cmd_callback(std_msgs::msg::String *msg);  // コマンド
 void calculate_duty(geometry_msgs::msg::Twist *twist);  // 移動
 void zero(void);    // すべてのモーターストップ
 void pls_keep_alive(void);  // 通信生存確認
-void get_cjk(void);     // 地磁気処理
+// void get_cjk(void);     // 地磁気処理
 float fix(float r);     // 角度を -180~180に変換する
 void echo();
 void sound_loop();
@@ -77,10 +77,10 @@ int main(){
         MROS2_INFO("ネットつながた！---");
     }
 
-    cjk.reset();
-    MROS2_INFO("地磁気確認開始");
-    while(!cjk.check()){printf("地磁気こないよぉ....\n");}
-    MROS2_INFO("地磁気確認ﾖｼ！");
+    // cjk.reset();
+    // MROS2_INFO("地磁気確認開始");
+    // while(!cjk.check()){printf("地磁気こないよぉ....\n");}
+    // MROS2_INFO("地磁気確認ﾖｼ！");
 
     MROS2_INFO("mini robot起動します");
     mros2::init(0, NULL);       // 初期化
@@ -95,7 +95,7 @@ int main(){
     MROS2_INFO("送受信準備完了！");
     keep_aliver.attach(&pls_keep_alive,300ms);
     for(int i=0;i<4;i++) {motor[i][0]->period_us(900);motor[i][1]->period_us(900);}
-    // sound_th.start(&sound_loop);
+    sound_th.start(&sound_loop);
     while (1) {
         if(power and !stop) for(int i=0;i<4;i++) {
             if(duty[i]>0) {motor[i][0]->write(abs(duty[i])); motor[i][1]->write(0);}
@@ -103,7 +103,7 @@ int main(){
         }
         else if(!stop) for(int i=0;i<4;i++) {zero();}
         ThisThread::sleep_for(10ms);
-        get_cjk();
+        // get_cjk();
         led1=!led1;
         if(debugger) echo();
     }
@@ -117,13 +117,20 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
-    out=p*fix(now-goal);
-    if(out>0.5) out=0.5;
-    else if(out<-0.5) out=-0.5;
+    // out=p*fix(now-goal);
+    // if(out>0.5) out=0.5;
+    // else if(out<-0.5) out=-0.5;
+    out=0;
     duty[0]= (x - y + angle)/unko+out;
     duty[1]= (x + y - angle)/unko-out;
     duty[2]= (x - y - angle)/unko-out;
     duty[3]= (x + y + angle)/unko+out;
+    for(int i=0;i<4;i++){
+        if(duty[i]!=0) {
+            if(0<duty[i] && duty[i]<0.5) duty[i]=0.5;
+            else if(-0.5<duty[i] && duty[i]<0) duty[i]=-0.5;
+        }
+    }
 }
 
 
@@ -168,15 +175,15 @@ void pls_keep_alive(void){
 }
 
 
-void get_cjk(void){
-    cjk.setmode(OPERATION_MODE_NDOF);
-    cjk.get_calib();
-    cjk.get_angles();
-    cjk.get_quat();
-    now=cjk.euler.yaw;
-    if(abs(angle)>0.01) ch=now-goal;
-    now-=ch;
-}
+// void get_cjk(void){
+//     cjk.setmode(OPERATION_MODE_NDOF);
+//     cjk.get_calib();
+//     cjk.get_angles();
+//     cjk.get_quat();
+//     now=cjk.euler.yaw;
+//     if(abs(angle)>0.01) ch=now-goal;
+//     now-=ch;
+// }
 
 
 float fix(float r){
@@ -189,10 +196,10 @@ float fix(float r){
 void echo(){
     printf("duty: %0.3f,%0.3f,%0.3f,%0.3f\t",duty[0],duty[1],duty[2],duty[3]);
     // printf("x: %0.1f, y: %0.1f, a:%0.1f \t",x,y,angle);
-    printf("cjk: %0.3f\t",cjk.euler.yaw);
+    // printf("cjk: %0.3f\t",cjk.euler.yaw);
     // printf("now: %0.3f\t",now);
     // printf("ch: %0.3f\t",ch);
-    printf("out: %0.3f\t",out);
+    // printf("out: %0.3f\t",out);
     printf("\n");
 }
 
@@ -221,14 +228,14 @@ void sound_loop(){
                 continue;
             }
             float wait=(1.0/rate)*1000*1000;
-            // printf("wait :%0.9f\n",wait);
-            // sound.period_us((int)wait);
+            printf("wait :%0.9f\n",wait);
+            sound.period_us((int)wait);
             // sound.period_us(93);
-            // for(int i=0;i<len;i++){
-            //     sound.write((float)*(ptr+i)/255.0);
-            //     // wait_us((int)wait/2.5);
-            //     wait_us(40);
-            // }
+            for(int i=0;i<len;i++){
+                sound.write((float)*(ptr+i)/255.0);
+                // wait_us((int)wait/2.5);
+                wait_us(40);
+            }
             wav="";
         }
     }
