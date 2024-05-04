@@ -41,13 +41,13 @@ int main(){
 
 void calculate_duty(geometry_msgs::msg::Twist *twist){
     is_alive=true;
-    x=twist->linear.x;
-    y=twist->linear.y*2;
+    x=twist->linear.x/2;
+    y=twist->linear.y;
     angle=twist->angular.z;
-    duty[0]=minmax( (float)((x - y + angle)/2.5) , -max_duty , max_duty);
-    duty[1]=minmax( (float)((x + y - angle)/2.5) , -max_duty , max_duty);
-    duty[2]=minmax( (float)((x - y - angle)/2.5) , -max_duty , max_duty);
-    duty[3]=minmax( (float)((x + y + angle)/2.5) , -max_duty , max_duty);
+    duty[0]=minmax( (float)((x - y + angle)/2) , -max_duty , max_duty);
+    duty[1]=minmax( (float)((x + y - angle)/2) , -max_duty , max_duty);
+    duty[2]=minmax( (float)((x - y - angle)/2) , -max_duty , max_duty);
+    duty[3]=minmax( (float)((x + y + angle)/2) , -max_duty , max_duty);
 }
 
 
