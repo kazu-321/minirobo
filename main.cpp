@@ -98,6 +98,7 @@ void echo(){
     printf("\n");
 }
 
+
 /*僕の考える最強のかんすう*/
 template<typename T>
 T minmax(T value,T minv,T maxv){ return min(max(value,minv),maxv); }
