@@ -1,6 +1,6 @@
 #include "ThisThread.h"
 #include "mbed.h"
-#include "ov2640_regs.h"
+#include "configs.h"
 #include "arducam.h"
 #include <cstdint>
 
