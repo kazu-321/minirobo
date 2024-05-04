@@ -44,10 +44,10 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
-    duty[0]= (x - y + angle);
-    duty[1]= (x + y - angle);
-    duty[2]= (x - y - angle);
-    duty[3]= (x + y + angle);
+    duty[0]= (x - y + angle)/3;
+    duty[1]= (x + y - angle)/3;
+    duty[2]= (x - y - angle)/3;
+    duty[3]= (x + y + angle)/3;
     for(int i=0;i<4;i++){
         if(duty[i]!=0) {
             if(0<duty[i] && duty[i]<max_duty) duty[i]=max_duty;
