@@ -44,10 +44,10 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
-    duty[0]=minmax( (float)(x - y + angle)/3 , -max_duty , max_duty);
-    duty[1]=minmax( (float)(x + y - angle)/3 , -max_duty , max_duty);
-    duty[2]=minmax( (float)(x - y - angle)/3 , -max_duty , max_duty);
-    duty[3]=minmax( (float)(x + y + angle)/3 , -max_duty , max_duty);
+    duty[0]=minmax( (float)((x - y + angle)/2.5) , -max_duty , max_duty);
+    duty[1]=minmax( (float)((x + y - angle)/2.5) , -max_duty , max_duty);
+    duty[2]=minmax( (float)((x - y - angle)/2.5) , -max_duty , max_duty);
+    duty[3]=minmax( (float)((x + y + angle)/2.5) , -max_duty , max_duty);
 }
 
 
