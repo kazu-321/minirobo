@@ -3,7 +3,7 @@
 
 int main(){
     MROS2_INFO("start");
-    if (mros2_platform::network_connect()) {            // connect to the network
+    if (mros2_platform::network_connect()) {            // ネットに接続
         MROS2_ERROR("ネットつながってないにょ...");
         return -1;
     } else {
@@ -44,6 +44,7 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x/1.5;
     y=twist->linear.y;
     angle=twist->angular.z;
+    /*がばがばけいさん！！*/
     duty[0]=minmax( (float)((x - y + angle)/2) , -max_duty , max_duty);
     duty[1]=minmax( (float)((x + y - angle)/2) , -max_duty , max_duty);
     duty[2]=minmax( (float)((x - y - angle)/2) , -max_duty , max_duty);
@@ -97,6 +98,6 @@ void echo(){
     printf("\n");
 }
 
-
+/*僕の考える最強のかんすう*/
 template<typename T>
 T minmax(T value,T minv,T maxv){ return min(max(value,minv),maxv); }
