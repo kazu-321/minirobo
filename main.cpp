@@ -41,7 +41,7 @@ int main(){
 
 void calculate_duty(geometry_msgs::msg::Twist *twist){
     is_alive=true;
-    x=twist->linear.x/2;
+    x=twist->linear.x/1.5;
     y=twist->linear.y;
     angle=twist->angular.z;
     duty[0]=minmax( (float)((x - y + angle)/2) , -max_duty , max_duty);
