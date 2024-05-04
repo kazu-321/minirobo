@@ -44,16 +44,10 @@ void calculate_duty(geometry_msgs::msg::Twist *twist){
     x=twist->linear.x;
     y=twist->linear.y;
     angle=twist->angular.z;
-    duty[0]= (x - y + angle)/3;
-    duty[1]= (x + y - angle)/3;
-    duty[2]= (x - y - angle)/3;
-    duty[3]= (x + y + angle)/3;
-    for(int i=0;i<4;i++){
-        if(duty[i]!=0) {
-            if(0<duty[i] && duty[i]<max_duty) duty[i]=max_duty;
-            else if(-max_duty<duty[i] && duty[i]<0) duty[i]=-max_duty;
-        }
-    }
+    duty[0]=minmax( (float)(x - y + angle)/3 , -max_duty , max_duty);
+    duty[1]=minmax( (float)(x + y - angle)/3 , -max_duty , max_duty);
+    duty[2]=minmax( (float)(x - y - angle)/3 , -max_duty , max_duty);
+    duty[3]=minmax( (float)(x + y + angle)/3 , -max_duty , max_duty);
 }
 
 
@@ -104,3 +98,5 @@ void echo(){
 }
 
 
+template<typename T>
+T minmax(T value,T minv,T maxv){ return min(max(value,minv),maxv); }

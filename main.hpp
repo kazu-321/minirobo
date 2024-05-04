@@ -50,3 +50,5 @@ void calculate_duty(geometry_msgs::msg::Twist *twist);  // 移動
 void zero(void);    // すべてのモーターストップ
 void pls_keep_alive(void);  // 通信生存確認
 void echo();
+template<typename T>
+T minmax(T value,T minv,T maxv);
