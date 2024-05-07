@@ -76,7 +76,7 @@ void cmd_callback(std_msgs::msg::String *msg){
         stop=true;
         printf("moter on:%d,%d = %f\n",stoi(cmds[1]),stoi(cmds[2]),stof(cmds[3]));
         motor[stoi(cmds[1])][stoi(cmds[2])]->write(stof(cmds[3]));
-        ThisThread::sleep_for(3s);
+        ThisThread::sleep_for(2s);
         stop=false;
     strend
 }
