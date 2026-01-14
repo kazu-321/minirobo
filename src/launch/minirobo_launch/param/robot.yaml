@@ -3,8 +3,8 @@
     chassis_type : "swerve"
     wheel_radius : 0.0375
     infinite_swerve_mode : true
-    footprint_points_x : [0.0, 0.0]
-    footprint_points_y : [+0.257, -0.257, -0.257, +0.257]
+    footprint_points_x : [0.08, 0.08, -0.08, -0.08]
+    footprint_points_y : [+0.15, -0.15, -0.15, +0.15]
     wheel_names : ["swerve_wheel_0", "swerve_wheel_1"]
     wheel_base_names : ["swerve_wheel_base_0", "swerve_wheel_base_1"]
     odom_frame_id : "map"
