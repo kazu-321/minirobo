@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<robot name="swerve_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- ==================== -->
+  <!-- Parameters           -->
+  <!-- ==================== -->
+  <xacro:property name="wheel_radius" value="0.0375"/>
+  <xacro:property name="wheel_width"  value="0.02"/>
+
+  <material name="white">
+    <color rgba="1.000 1.000 1.000 1.0"/>
+  </material>
+
+  <!-- ==================== -->
+  <!-- Base link             -->
+  <!-- ==================== -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="-0.08 0.15 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <mesh filename="package://minirobo_launch/meshes/base.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+  </link>
+
+  <!-- ==================== -->
+  <!-- Wheel module macro    -->
+  <!-- ==================== -->
+  <xacro:macro name="swerve" params="wheel_base_name wheel_name x y">
+
+    <!-- steer link -->
+    <link name="${wheel_base_name}_link">
+      <visual>
+        <origin xyz="0 0 0.14" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://minirobo_launch/meshes/wheel.stl"/>
+        </geometry>
+        <material name="white"/>
+      </visual>
+    </link>
+
+    <!-- steer joint -->
+    <joint name="${wheel_base_name}" type="continuous">
+      <parent link="base_link"/>
+      <child link="${wheel_base_name}_link"/>
+      <origin xyz="${x} ${y} ${wheel_radius}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+
+    <!-- as5600 link -->
+    <link name="${wheel_base_name}_as5600_link"/>
+
+    <!-- as5600 joint -->
+    <joint name="${wheel_base_name}_as5600" type="continuous">
+      <parent link="base_link"/>
+      <child link="${wheel_base_name}_as5600_link"/>
+      <origin xyz="${x} ${y} 0.16" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+
+    <!-- wheel link -->
+    <link name="${wheel_name}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <origin rpy="1.5708 0 0"/>
+        <material name="black">
+          <color rgba="0.1 0.1 0.1 1.0"/>
+        </material>
+      </visual>
+    </link>
+
+    <!-- wheel joint -->
+    <joint name="${wheel_name}" type="continuous">
+      <parent link="${wheel_base_name}_link"/>
+      <child link="${wheel_name}_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+  </xacro:macro>
+
+  <!-- ==================== -->
+  <!-- Wheel instances       -->
+  <!-- ==================== -->
+  <xacro:swerve wheel_base_name="swerve_wheel_base_0" wheel_name="swerve_wheel_0" x="0.0" y="0.083"/>
+  <xacro:swerve wheel_base_name="swerve_wheel_base_1" wheel_name="swerve_wheel_1" x="0.0" y="-0.083"/>
+</robot>

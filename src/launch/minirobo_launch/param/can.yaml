@@ -1,0 +1,45 @@
+/**:
+  ros__parameters:
+    joint_state_command_topics: ["/swerve/command_joint_states"]
+    command_transmit_frequency: 100.0
+    parameter_transmit_frequency: 10.0
+    rmc_num: 1
+    rmc_0:
+      motor_num: 4
+      feedback_period_ms: 10
+      state_period_ms: 100
+      timeout_ms: 255
+      joint_name: ["swerve_wheel_base_0", "swerve_wheel_base_1", "swerve_wheel_0", "swerve_wheel_1"]
+      control_mode: ["position", "position", "speed", "speed"]
+      ratio: [108.0, 108.0, 5.052631578947368, 5.052631578947368]
+      origin_get_mode: ["as5600", "as5600", "manual", "manual"]
+      origin_target: [0, 0, 0, 0,]
+      position_offset: [0.0, 0.0, 0.0, 0.0]
+      origin_id: [0, 1, 0, 0]
+      max_position: [0.0, 0.0, 0.0, 0.0]
+      min_position: [0.0, 0.0, 0.0, 0.0]
+      speed_kp: [2.0, 2.0, 2.0, 2.0]
+      speed_ki: [1.8, 1.8, 1.8, 1.8]
+      speed_kd: [0.1, 0.1, 0.1, 0.1]
+      position_kp: [500.0, 500.0, 0.0, 0.0]
+      position_ki: [0.0, 0.0, 0.0, 0.0]
+      position_kd: [10000.0, 10000.0, 0.0, 0.0]
+      stop_speed_threshold: [60, 60, 60, 60]
+      stop_time_threshold_ms: [100, 100, 100, 100]
+      use_position_limit: [false, false, false, false]
+    
+    i2c_num: 2
+    i2c_0:
+      device_type: "as5600"
+      period_ms: 10
+      joint_name: "swerve_wheel_base_0_as5600"
+      as5600:
+        zero_position: 1.684601836602552 # -2.470 *-1 -math.pi/4
+        ratio: -1.0
+    i2c_1:
+      device_type: "as5600"
+      period_ms: 10
+      joint_name: "swerve_wheel_base_1_as5600"
+      as5600:
+        zero_position: 0.05419449019234479 # 2.302 *-1 +math.pi/4*3
+        ratio: -1.0
