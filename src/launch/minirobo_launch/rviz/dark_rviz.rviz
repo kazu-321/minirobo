@@ -44,7 +44,7 @@ Visualization Manager:
         Z: 0
       Plane: XY
       Plane Cell Count: 25
-      Reference Frame: <Fixed Frame>
+      Reference Frame: map
       Value: true
     - Class: rviz_default_plugins/TF
       Enabled: true
@@ -63,17 +63,17 @@ Visualization Manager:
           Value: true
         command/swerve_wheel_base_1_link:
           Value: true
-        joy:
-          Value: true
         map:
-          Value: true
-        simulation:
           Value: true
         swerve_wheel_0_link:
           Value: true
         swerve_wheel_1_link:
           Value: true
+        swerve_wheel_base_0_as5600_link:
+          Value: true
         swerve_wheel_base_0_link:
+          Value: true
+        swerve_wheel_base_1_as5600_link:
           Value: true
         swerve_wheel_base_1_link:
           Value: true
@@ -92,16 +92,16 @@ Visualization Manager:
               command/swerve_wheel_base_1_link:
                 command/swerve_wheel_1_link:
                   {}
-            joy:
+            swerve_wheel_base_0_as5600_link:
               {}
             swerve_wheel_base_0_link:
               swerve_wheel_0_link:
                 {}
+            swerve_wheel_base_1_as5600_link:
+              {}
             swerve_wheel_base_1_link:
               swerve_wheel_1_link:
                 {}
-          simulation:
-            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -315,7 +315,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 60; 60; 60
-    Fixed Frame: map
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -358,7 +358,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 0.8301319479942322
+      Distance: 0.7305161356925964
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -373,10 +373,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8303981423377991
+      Pitch: 0.5903983116149902
       Target Frame: base_link
       Value: Orbit (rviz_default_plugins)
-      Yaw: 2.920402765274048
+      Yaw: 2.6554012298583984
     Saved: ~
 Window Geometry:
   Displays:
