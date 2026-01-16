@@ -7,33 +7,41 @@
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "stop.mp3"
+      volume: 1.0
     button_1:
       function: "power"
       mode: "toggle_on"
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "hello.mp3"
+      volume: 1.0
     button_2:
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "count.mp3"
+      volume: 2.0
     button_3:
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "bekobeko_tt_ankou.mp3"
+      volume: 0.7
     button_11:
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "forward.mp3"
+      volume: 1.0
     button_12:
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "backward.mp3"
+      volume: 1.0
     button_13:
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "down.mp3"
+      volume: 0.5
     button_14:
       sound_package: "minirobo_launch"
       sound_directory: "sound"
       sound_file: "start.mp3"
+      volume: 3.0
