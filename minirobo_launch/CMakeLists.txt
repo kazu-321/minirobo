@@ -9,5 +9,6 @@ ament_auto_package(
     meshes
     param
     rviz
+    sound
     urdf
 )

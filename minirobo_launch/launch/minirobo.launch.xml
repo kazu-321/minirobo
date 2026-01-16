@@ -27,13 +27,9 @@
             <param name="frame_id" value="base_link"/>
             <param name="child_frame_id" value="command/base_link"/>
         </composable_node>
-
-        <composable_node pkg="natto_visualization_converter" plugin="footprint_publisher::footprint_publisher" name="footprint_publisher" namespace="/common">
-            <param from="$(find-pkg-share minirobo_launch)/param/robot.yaml"/>
-        </composable_node>
     </node_container>
 
-    <node_container pkg="rclcpp_components" exec="component_container" name="calculator_container" namespace="/">
+    <node_container pkg="rclcpp_components" exec="component_container" name="calculator_container" namespace="localization">
         <composable_node pkg="natto_chassis_calculator" plugin="chassis_calculator::chassis_calculator" name="chassis_calculator" namespace="/control/swerve">
             <param from="$(find-pkg-share minirobo_launch)/param/robot.yaml"/>
             <remap from="command_joint_states" to="/swerve/command_joint_states"/>
@@ -41,7 +37,7 @@
             <remap from="command_velocity" to="/command_velocity"/>
         </composable_node>
 
-        <composable_node pkg="natto_wheel_odometry" plugin="wheel_odometry::wheel_odometry" name="wheel_odometry" namespace="/localization/wheel_odometry">
+        <composable_node pkg="natto_wheel_odometry" plugin="wheel_odometry::wheel_odometry" name="wheel_odometry" namespace="localization/wheel_odometry">
             <param from="$(find-pkg-share minirobo_launch)/param/robot.yaml"/>
             <param name="publish_tf" value="true"/>
             <remap from="joint_states" to="/joint_states"/>
@@ -67,14 +63,33 @@
 
     <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
         args="-d $(find-pkg-share minirobo_launch)/rviz/dark_rviz.rviz --stylesheet $(find-pkg-share natto_launch)/rviz/dark.qss"/>
-        
-    <node_container pkg="rclcpp_components" exec="component_container" name="simulation_container" namespace="/simulation">
-        <composable_node pkg="natto_simple_simulation" plugin="joint_state_simulator::joint_state_simulator" name="joint_state_simulator" namespace="/simulation">
-            <param from="$(find-pkg-share minirobo_launch)/param/simulation.yaml"/>
-            <param from="$(find-pkg-share minirobo_launch)/param/robot.yaml"/>
-            <remap from="joint_states" to="/joint_states"/>
-            <remap from="command_joint_states" to="/command_joint_states"/>
-            <remap from="simulation_pose" to="/simulation/pose"/>
+
+    <node_container pkg="rclcpp_components" exec="component_container" name="communication_container" namespace="/can">
+        <composable_node pkg="natto_canable" plugin="canable::canable" name="canable">
+            <param name="use_fd" value="true"/>
+            <remap from="transmit" to="/can/transmit"/>
+            <remap from="receive" to="/can/receive"/>
+        </composable_node>
+        <composable_node pkg="natto_can_bridge" plugin="can_bridge::can_bridge" name="can_bridge">
+            <param from="$(find-pkg-share minirobo_launch)/param/can.yaml"/>
+            <remap from="transmit" to="/can/transmit"/>
+            <remap from="receive" to="/can/receive"/>
+            <remap from="power" to="/controller/power"/>
         </composable_node>
     </node_container>
+    
+    <arg name="device" default="" />
+    <arg name="loop_rate" default="100" />
+    <arg name="default_voice" default="voice_kal_diphone" />
+
+    <node name="soundplay_node" pkg="sound_play" exec="soundplay_node.py">
+        <param name="device" value="$(var device)" />
+        <param name="loop_rate" value="$(var loop_rate)" />
+        <param name="default_voice" value="$(var default_voice)" />
+    </node>
+
+    <node name="button_sound" pkg="sound_controller_ros2" exec="button_sound">
+        <param from="$(find-pkg-share minirobo_launch)/param/controller.yaml"/>
+        <remap from="joy" to="/controller/joy"/>
+    </node>
 </launch>

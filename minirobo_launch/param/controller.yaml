@@ -1,0 +1,39 @@
+/**:
+  ros__parameters:
+    num_button: 15
+    button_0:
+      function: "power"
+      mode: "toggle_off"
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "stop.mp3"
+    button_1:
+      function: "power"
+      mode: "toggle_on"
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "hello.mp3"
+    button_2:
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "count.mp3"
+    button_3:
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "bekobeko_tt_ankou.mp3"
+    button_11:
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "forward.mp3"
+    button_12:
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "backward.mp3"
+    button_13:
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "down.mp3"
+    button_14:
+      sound_package: "minirobo_launch"
+      sound_directory: "sound"
+      sound_file: "start.mp3"
